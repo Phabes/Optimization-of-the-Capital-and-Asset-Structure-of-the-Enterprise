@@ -5,7 +5,7 @@ def percentage(a, b):
     return a / b * 100
 
 
-conn = sqlite3.connect("modified_year.db")
+conn = sqlite3.connect("original_quarter.db")
 
 cursor = conn.execute(
     "SELECT C.ID, COUNT(*) AS Total FROM Company AS C JOIN AssetsCategories AS AC ON AC.CompanyID = C.ID JOIN EquityLiabilitiesCategories AS ELC ON ELC.CompanyID = C.ID AND ELC.Date = AC.Date JOIN MarketValues MV ON MV.CompanyID = C.ID AND MV.[Period end] = ELC.Date GROUP BY C.ID HAVING Total > 1"
