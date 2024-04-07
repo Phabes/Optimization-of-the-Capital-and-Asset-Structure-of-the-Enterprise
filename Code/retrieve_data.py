@@ -1,4 +1,8 @@
 import sqlite3
+import pandas as pd
+import tensorflow as tf
+from tensorflow import keras
+from sklearn.model_selection import train_test_split
 
 
 def percentage(a, b):
@@ -25,7 +29,9 @@ data = [row for row in cursor]
 # print(data)
 # print(len(data))
 
-final_data = []
+conn.close()
+
+temporary_data = []
 for i in range(len(data)):
     company_id = data[i][0]
     period = data[i][1]
@@ -40,10 +46,90 @@ for i in range(len(data)):
         row.append(percentage(asset, total_assets))
     for liability in liabilities:
         row.append(percentage(liability, total_liabilities))
-    final_data.append(row)
+    temporary_data.append(row)
 
 # company_id, period, market_value, 5 x assets, 5 x liabilities
+print(temporary_data)
+print(len(temporary_data))
+
+final_data = []
+
+for i in range(1, len(temporary_data)):
+    if temporary_data[i][0] != temporary_data[i - 1][0]:
+        continue
+    x = [temporary_data[i][0], temporary_data[i][1],
+         (temporary_data[i][2] - temporary_data[i - 1][2]) / temporary_data[i - 1][2]]
+    for j in range(3, len(temporary_data[i])):
+        x.append(temporary_data[i][j] - temporary_data[i - 1][j])
+    final_data.append(x)
+
 print(final_data)
 print(len(final_data))
 
-conn.close()
+df = pd.DataFrame(final_data, columns=["CompanyID", "Period", "MarketValue", "NonCurrentAssets", "CurrentAssets",
+                                 "AssetsHeldForSaleAndDiscountinuingOperations", "CalledUpCapital", "OwnShares",
+                                 "EquityShareholdersOfTheParent", "NonControllingInterests", "NonCurrentLiabilities",
+                                 "CurrentLiabilities",
+                                 "LiabilitiesRelatedToAssetsHeldForSaleAndDiscontinuedOperations"])
+
+print(df)
+
+df = df.drop(["CompanyID", "Period"], axis=1)
+Q1 = df.quantile(0.1)
+Q3 = df.quantile(0.9)
+IQR = Q3 - Q1
+lower_bound = Q1 - 1.5 * IQR
+upper_bound = Q3 + 1.5 * IQR
+df = df[~((df < lower_bound) | (df > upper_bound)).any(axis=1)]
+X = df.drop(["MarketValue"], axis=1)
+y = df["MarketValue"]
+
+print(X)
+print(y)
+
+# n_nodes = [16, 8, 4, 2]
+# model = keras.models.Sequential()
+# model.add(keras.layers.Dense(n_nodes[0], input_dim=X.shape[1], activation="relu"))
+# for i in range(1, len(n_nodes)):
+#     model.add(keras.layers.Dense(n_nodes[i], input_dim=n_nodes[i - 1],
+#                                  activation="relu"))
+#     model.add(keras.layers.Dropout(0.2))
+# model.add(keras.layers.Dense(1))
+# model.compile(
+#     optimizer="adam",
+#     loss="mean_squared_error",
+#     metrics=["mean_absolute_error"],
+# )
+
+n_nodes = [8, 4]
+
+inputs = keras.Input(shape=(X.shape[1],))
+
+x = keras.layers.Dense(n_nodes[0], activation="relu")(inputs)
+
+for i in range(1, len(n_nodes)):
+    x = keras.layers.Dense(n_nodes[i], activation="relu")(x)
+    x = keras.layers.Dropout(0.2)(x)
+
+outputs = keras.layers.Dense(1)(x)
+
+model = keras.Model(inputs=inputs, outputs=outputs)
+model.compile(
+    optimizer="adam",
+    loss="mean_squared_error",
+    metrics=["mean_absolute_error"],
+)
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1)
+
+model.fit(
+    X_train,
+    y_train,
+    epochs=10,
+    validation_data=(X_test, y_test),
+    validation_freq=10,
+    verbose=True, )
+
+predictions = model.predict(X_test)
+for i in range(len(predictions)):
+    print(predictions[i], y_test.iloc[i])
