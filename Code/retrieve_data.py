@@ -67,10 +67,11 @@ print(final_data)
 print(len(final_data))
 
 df = pd.DataFrame(final_data, columns=["CompanyID", "Period", "MarketValue", "NonCurrentAssets", "CurrentAssets",
-                                 "AssetsHeldForSaleAndDiscountinuingOperations", "CalledUpCapital", "OwnShares",
-                                 "EquityShareholdersOfTheParent", "NonControllingInterests", "NonCurrentLiabilities",
-                                 "CurrentLiabilities",
-                                 "LiabilitiesRelatedToAssetsHeldForSaleAndDiscontinuedOperations"])
+                                       "AssetsHeldForSaleAndDiscountinuingOperations", "CalledUpCapital", "OwnShares",
+                                       "EquityShareholdersOfTheParent", "NonControllingInterests",
+                                       "NonCurrentLiabilities",
+                                       "CurrentLiabilities",
+                                       "LiabilitiesRelatedToAssetsHeldForSaleAndDiscontinuedOperations"])
 
 print(df)
 
@@ -128,7 +129,11 @@ model.fit(
     epochs=10,
     validation_data=(X_test, y_test),
     validation_freq=10,
-    verbose=True, )
+    # callbacks=[
+    #     keras.callbacks.EarlyStopping(monitor="mean_absolute_error", patience=10),
+    # ],
+    verbose=True
+)
 
 predictions = model.predict(X_test)
 for i in range(len(predictions)):
