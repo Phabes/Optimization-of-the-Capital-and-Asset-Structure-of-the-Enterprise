@@ -1,6 +1,7 @@
 import sqlite3
 import pandas as pd
-import tensorflow as tf
+from sklearn.cluster import DBSCAN
+from sklearn.ensemble import IsolationForest
 from tensorflow import keras
 from sklearn.model_selection import train_test_split
 
@@ -102,7 +103,7 @@ print(y)
 #     metrics=["mean_absolute_error"],
 # )
 
-n_nodes = [8, 4]
+n_nodes = [64, 32]
 
 inputs = keras.Input(shape=(X.shape[1],))
 
@@ -110,7 +111,7 @@ x = keras.layers.Dense(n_nodes[0], activation="relu")(inputs)
 
 for i in range(1, len(n_nodes)):
     x = keras.layers.Dense(n_nodes[i], activation="relu")(x)
-    x = keras.layers.Dropout(0.2)(x)
+    x = keras.layers.Dropout(0.1)(x)
 
 outputs = keras.layers.Dense(1)(x)
 
@@ -138,3 +139,19 @@ model.fit(
 predictions = model.predict(X_test)
 for i in range(len(predictions)):
     print(predictions[i], y_test.iloc[i])
+
+# dbscan = DBSCAN(eps=5, min_samples=2)
+# dbscan.fit(X_train)
+# test_labels = dbscan.fit_predict(X_test)
+#
+# test_outliers = X_test[test_labels == -1]
+#
+# print("Number of outliers in test data:", len(test_outliers))
+
+isolation_forest = IsolationForest()
+isolation_forest.fit(X_train)
+test_outliers = isolation_forest.predict(X_test)
+
+test_outliers = X_test[test_outliers == -1]
+
+print("Number of outliers in test data:", len(test_outliers), "out of:", len(X_test))
