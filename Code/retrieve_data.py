@@ -127,6 +127,7 @@ model.fit(
     epochs=100,
     validation_data=(X_val, y_val),
     validation_freq=10,
+    validation_split=0.2,
     # callbacks=[
     #     keras.callbacks.EarlyStopping(monitor="mean_absolute_error", patience=10),
     # ],
@@ -136,6 +137,9 @@ model.fit(
 predictions = model.predict(X_test)
 for i in range(len(predictions)):
     print(predictions[i], y_test.iloc[i])
+
+loss = model.evaluate(X_test, y_test)
+print("Test Loss:", loss)
 
 # mape_loss = keras.metrics.mean_absolute_percentage_error(y_test, predictions)
 # mse_loss = keras.metrics.mean_squared_error(y_test, predictions)
