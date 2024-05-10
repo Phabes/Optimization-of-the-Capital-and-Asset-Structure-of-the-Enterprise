@@ -97,7 +97,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.15)
 
 X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.07)
 
-n_nodes = [16, 8, 4, 2]
+n_nodes = [128, 64, 32, 16]
 
 inputs = keras.Input(shape=(X.shape[1],))
 
