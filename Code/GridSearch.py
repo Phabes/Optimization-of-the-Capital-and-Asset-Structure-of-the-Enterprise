@@ -1,13 +1,10 @@
 import sqlite3
-import pandas as pd
-from sklearn.cluster import DBSCAN
-from sklearn.ensemble import IsolationForest
+
 from tensorflow import keras
+import pandas as pd
 from sklearn.model_selection import train_test_split
 from scikeras.wrappers import KerasRegressor
 from sklearn.model_selection import GridSearchCV
-
-from Company import Company
 
 
 def percentage(a, b):
@@ -107,7 +104,6 @@ def create_model(n_nodes):
         model.add(keras.layers.Dropout(0.1))
     model.add(keras.layers.Dense(1))
 
-    # Define optimizer with the specified learning rate
     optimizer = keras.optimizers.Adam(learning_rate=0.00001)
     model.compile(optimizer=optimizer, loss="mean_squared_error", metrics=["mean_absolute_error"])
     return model
@@ -119,13 +115,9 @@ param_grid = {
 
 keras_regressor = KerasRegressor(model=create_model, epochs=10, n_nodes=[64, 32])
 
-print(keras_regressor.get_params().keys())
-
-# Perform grid search
 grid_search = GridSearchCV(estimator=keras_regressor, param_grid=param_grid, cv=3)
 grid_result = grid_search.fit(X_train, y_train)
 
-# Summarize results
 print("Best: %f using %s" % (grid_result.best_score_, grid_result.best_params_))
 means = grid_result.cv_results_['mean_test_score']
 stds = grid_result.cv_results_['std_test_score']
@@ -133,5 +125,5 @@ params = grid_result.cv_results_['params']
 for mean, stdev, param in zip(means, stds, params):
     print("%f (%f) with: %r" % (mean, stdev, param))
 
-# Get the best model
 best_model = grid_result.best_estimator_.model
+print(best_model)

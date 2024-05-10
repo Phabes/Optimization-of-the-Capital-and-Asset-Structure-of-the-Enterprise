@@ -1,8 +1,9 @@
 import sqlite3
+
+from tensorflow import keras
 import pandas as pd
 from sklearn.cluster import DBSCAN
 from sklearn.ensemble import IsolationForest
-from tensorflow import keras
 from sklearn.model_selection import train_test_split
 from scikeras.wrappers import KerasRegressor
 
@@ -97,17 +98,6 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.15)
 X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.07)
 
 n_nodes = [16, 8, 4, 2]
-model = keras.models.Sequential()
-model.add(keras.layers.Dense(n_nodes[0], input_dim=X.shape[1], activation="relu"))
-for i in range(1, len(n_nodes)):
-    model.add(keras.layers.Dense(n_nodes[i], input_dim=n_nodes[i - 1], activation="relu"))
-    model.add(keras.layers.Dropout(0.2))
-model.add(keras.layers.Dense(1))
-model.compile(
-    optimizer="adam",
-    loss="mean_squared_error",
-    metrics=["mean_absolute_error"],
-)
 
 inputs = keras.Input(shape=(X.shape[1],))
 
@@ -121,7 +111,7 @@ outputs = keras.layers.Dense(1)(x)
 
 model = keras.Model(inputs=inputs, outputs=outputs)
 
-learning_rate = 0.00001  # You can adjust this value as needed
+learning_rate = 0.000001  # You can adjust this value as needed
 
 optimizer = keras.optimizers.Adam(learning_rate=learning_rate)
 
@@ -130,7 +120,7 @@ model.compile(
     loss="mean_squared_error",
     metrics=["mean_absolute_error"],
 )
-#
+
 model.fit(
     X_train,
     y_train,
@@ -146,7 +136,7 @@ model.fit(
 predictions = model.predict(X_test)
 for i in range(len(predictions)):
     print(predictions[i], y_test.iloc[i])
-#
+
 # mape_loss = keras.metrics.mean_absolute_percentage_error(y_test, predictions)
 # mse_loss = keras.metrics.mean_squared_error(y_test, predictions)
 #
@@ -160,13 +150,13 @@ for i in range(len(predictions)):
 #
 # print("Number of outliers in test data:", len(test_outliers))
 
-isolation_forest = IsolationForest()
-isolation_forest.fit(X_train)
-test_outliers = isolation_forest.predict(X_test)
-
-test_outliers = X_test[test_outliers == -1]
-
-print("Number of outliers in test data:", len(test_outliers), "out of:", len(X_test))
+# isolation_forest = IsolationForest()
+# isolation_forest.fit(X_train)
+# test_outliers = isolation_forest.predict(X_test)
+#
+# test_outliers = X_test[test_outliers == -1]
+#
+# print("Number of outliers in test data:", len(test_outliers), "out of:", len(X_test))
 
 
 # generated_companies = []
