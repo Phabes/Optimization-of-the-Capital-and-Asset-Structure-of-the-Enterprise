@@ -6,6 +6,7 @@ from sklearn.cluster import DBSCAN
 from sklearn.ensemble import IsolationForest
 from sklearn.model_selection import train_test_split
 from scikeras.wrappers import KerasRegressor
+from random import uniform
 
 from Company import Company
 
@@ -121,30 +122,25 @@ model.compile(
     metrics=["mean_absolute_error"],
 )
 
-model.fit(
-    X_train,
-    y_train,
-    epochs=100,
-    validation_data=(X_val, y_val),
-    validation_freq=10,
-    validation_split=0.2,
-    # callbacks=[
-    #     keras.callbacks.EarlyStopping(monitor="mean_absolute_error", patience=10),
-    # ],
-    verbose=True
-)
+# model.fit(
+#     X_train,
+#     y_train,
+#     epochs=100,
+#     validation_data=(X_val, y_val),
+#     validation_freq=10,
+#     validation_split=0.2,
+#     # callbacks=[
+#     #     keras.callbacks.EarlyStopping(monitor="mean_absolute_error", patience=10),
+#     # ],
+#     verbose=True
+# )
 
-predictions = model.predict(X_test)
-for i in range(len(predictions)):
-    print(predictions[i], y_test.iloc[i])
-
-loss = model.evaluate(X_test, y_test)
-print("Test Loss:", loss)
-
-# mape_loss = keras.metrics.mean_absolute_percentage_error(y_test, predictions)
-# mse_loss = keras.metrics.mean_squared_error(y_test, predictions)
+# predictions = model.predict(X_test)
+# for i in range(len(predictions)):
+#     print(predictions[i], y_test.iloc[i])
 #
-# print(mape_loss, mse_loss)
+# loss = model.evaluate(X_test, y_test)
+# print("Test Loss:", loss)
 
 # dbscan = DBSCAN(eps=5, min_samples=2)
 # dbscan.fit(X_train)
@@ -162,7 +158,18 @@ print("Test Loss:", loss)
 #
 # print("Number of outliers in test data:", len(test_outliers), "out of:", len(X_test))
 
+def generate_numbers_summing_to_100(n):
+    numbers = []
+    total = 0
+    for i in range(n - 1):
+        num = uniform(0, 100 - total - (n - i - 1))
+        numbers.append(num)
+        total += num
+    numbers.append(100 - total)
+    return numbers
 
-# generated_companies = []
-# for i in range(100):
-#     generated_companies.append(Company([for i in range()]))
+generated_companies = []
+while len(generated_companies) == 1000:
+    company = Company(*generate_numbers_summing_to_100(5), *generate_numbers_summing_to_100(5))
+
+    generated_companies.append(company)
