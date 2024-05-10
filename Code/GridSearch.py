@@ -110,12 +110,12 @@ def create_model(n_nodes):
 
 # Define the hyperparameters grid
 param_grid = {
-    'n_nodes': [[64, 32], [64, 64], [128, 64], [128, 128], [64, 32, 16], [16, 8, 4, 2], [64, 16, 4], [128, 64, 32, 16]],
+    'n_nodes': [[64, 32], [64, 64], [128, 64], [128, 128], [64, 32, 16], [16, 8, 4, 2], [64, 16, 4], [128, 64, 32, 16], [128, 64, 32, 16, 8, 4, 2]],
 }
 
-keras_regressor = KerasRegressor(model=create_model, epochs=10, n_nodes=[64, 32])
+keras_regressor = KerasRegressor(model=create_model, epochs=100, n_nodes=[64, 32])
 
-grid_search = GridSearchCV(estimator=keras_regressor, param_grid=param_grid, cv=3)
+grid_search = GridSearchCV(estimator=keras_regressor, param_grid=param_grid, cv=5)
 grid_result = grid_search.fit(X_train, y_train)
 
 print("Best: %f using %s" % (grid_result.best_score_, grid_result.best_params_))
