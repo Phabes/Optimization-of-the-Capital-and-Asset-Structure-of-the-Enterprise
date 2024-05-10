@@ -5,6 +5,7 @@ from sklearn.ensemble import IsolationForest
 from tensorflow import keras
 from sklearn.model_selection import train_test_split
 from scikeras.wrappers import KerasRegressor
+from sklearn.model_selection import GridSearchCV
 
 from Company import Company
 
@@ -96,79 +97,41 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.15)
 
 X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.07)
 
-n_nodes = [16, 8, 4, 2]
-model = keras.models.Sequential()
-model.add(keras.layers.Dense(n_nodes[0], input_dim=X.shape[1], activation="relu"))
-for i in range(1, len(n_nodes)):
-    model.add(keras.layers.Dense(n_nodes[i], input_dim=n_nodes[i - 1], activation="relu"))
-    model.add(keras.layers.Dropout(0.2))
-model.add(keras.layers.Dense(1))
-model.compile(
-    optimizer="adam",
-    loss="mean_squared_error",
-    metrics=["mean_absolute_error"],
-)
+def create_model(n_nodes):
+    inputs = keras.Input(shape=(X.shape[1],))
+    model = keras.models.Sequential()
+    model.add(inputs)
+    model.add(keras.layers.Dense(n_nodes[0], activation="relu"))
+    for i in range(1, len(n_nodes)):
+        model.add(keras.layers.Dense(n_nodes[i], activation="relu"))
+        model.add(keras.layers.Dropout(0.1))
+    model.add(keras.layers.Dense(1))
 
-inputs = keras.Input(shape=(X.shape[1],))
+    # Define optimizer with the specified learning rate
+    optimizer = keras.optimizers.Adam(learning_rate=0.00001)
+    model.compile(optimizer=optimizer, loss="mean_squared_error", metrics=["mean_absolute_error"])
+    return model
 
-x = keras.layers.Dense(n_nodes[0], activation="relu")(inputs)
+# Define the hyperparameters grid
+param_grid = {
+    'n_nodes': [[64, 32], [64, 64], [128, 64], [128, 128], [64, 32, 16], [16, 8, 4, 2], [64, 16, 4], [128, 64, 32, 16]],
+}
 
-for i in range(1, len(n_nodes)):
-    x = keras.layers.Dense(n_nodes[i], activation="relu")(x)
-    x = keras.layers.Dropout(0.1)(x)
+keras_regressor = KerasRegressor(model=create_model, epochs=10, n_nodes=[64, 32])
 
-outputs = keras.layers.Dense(1)(x)
+print(keras_regressor.get_params().keys())
 
-model = keras.Model(inputs=inputs, outputs=outputs)
+# Perform grid search
+grid_search = GridSearchCV(estimator=keras_regressor, param_grid=param_grid, cv=3)
+grid_result = grid_search.fit(X_train, y_train)
 
-learning_rate = 0.00001  # You can adjust this value as needed
+# Summarize results
+print("Best: %f using %s" % (grid_result.best_score_, grid_result.best_params_))
+means = grid_result.cv_results_['mean_test_score']
+stds = grid_result.cv_results_['std_test_score']
+params = grid_result.cv_results_['params']
+for mean, stdev, param in zip(means, stds, params):
+    print("%f (%f) with: %r" % (mean, stdev, param))
 
-optimizer = keras.optimizers.Adam(learning_rate=learning_rate)
-
-model.compile(
-    optimizer=optimizer,
-    loss="mean_squared_error",
-    metrics=["mean_absolute_error"],
-)
-#
-model.fit(
-    X_train,
-    y_train,
-    epochs=100,
-    validation_data=(X_val, y_val),
-    validation_freq=10,
-    # callbacks=[
-    #     keras.callbacks.EarlyStopping(monitor="mean_absolute_error", patience=10),
-    # ],
-    verbose=True
-)
-
-predictions = model.predict(X_test)
-for i in range(len(predictions)):
-    print(predictions[i], y_test.iloc[i])
-#
-# mape_loss = keras.metrics.mean_absolute_percentage_error(y_test, predictions)
-# mse_loss = keras.metrics.mean_squared_error(y_test, predictions)
-#
-# print(mape_loss, mse_loss)
-
-# dbscan = DBSCAN(eps=5, min_samples=2)
-# dbscan.fit(X_train)
-# test_labels = dbscan.fit_predict(X_test)
-#
-# test_outliers = X_test[test_labels == -1]
-#
-# print("Number of outliers in test data:", len(test_outliers))
-
-isolation_forest = IsolationForest()
-isolation_forest.fit(X_train)
-test_outliers = isolation_forest.predict(X_test)
-
-test_outliers = X_test[test_outliers == -1]
-
-print("Number of outliers in test data:", len(test_outliers), "out of:", len(X_test))
-
-
-# generated_companies = []
-# for i in range(100):
-#     generated_companies.append(Company([for i in range()]))
+# Get the best model
+best_model = grid_result.best_estimator_.model
