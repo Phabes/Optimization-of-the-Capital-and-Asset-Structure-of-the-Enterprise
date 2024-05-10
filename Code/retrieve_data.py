@@ -5,10 +5,6 @@ import pandas as pd
 from sklearn.cluster import DBSCAN
 from sklearn.ensemble import IsolationForest
 from sklearn.model_selection import train_test_split
-from scikeras.wrappers import KerasRegressor
-
-from Company import Company
-
 
 def percentage(a, b):
     return a / b * 100
@@ -21,8 +17,6 @@ cursor = conn.execute(
 )
 
 companies_with_needed_data = [row[0] for row in cursor]
-# print(companies_with_needed_data)
-# print(len(companies_with_needed_data))
 
 cursor = conn.execute(
     "SELECT C.ID, MV.[Period end], MV.[Market value], AC.[Non-current assets], AC.[Current assets], AC.[Assets held for sale and discontinuing operations], AC.[Called up capital], AC.[Own shares], ELC.[Equity shareholders of the parent], ELC.[Non-controlling interests], ELC.[Non-current liabilities], ELC.[Current liabilities], ELC.[Liabilities related to assets held for sale and discontinued operations] FROM Company AS C JOIN AssetsCategories AS AC ON AC.CompanyID = C.ID JOIN EquityLiabilitiesCategories AS ELC ON ELC.CompanyID = C.ID AND ELC.Date = AC.Date JOIN MarketValues MV ON MV.CompanyID = C.ID AND MV.[Period end] = ELC.Date WHERE C.ID IN ({seq}) ORDER BY C.ID, MV.[Period end]".format(
@@ -31,8 +25,6 @@ cursor = conn.execute(
 )
 
 data = [row for row in cursor]
-# print(data)
-# print(len(data))
 
 conn.close()
 
@@ -57,6 +49,30 @@ for i in range(len(data)):
 print(temporary_data)
 print(len(temporary_data))
 
+# Outlier structure detection
+df_temporary = pd.DataFrame(temporary_data,
+                            columns=["CompanyID", "Period", "MarketValue", "NonCurrentAssets", "CurrentAssets",
+                                     "AssetsHeldForSaleAndDiscountinuingOperations", "CalledUpCapital", "OwnShares",
+                                     "EquityShareholdersOfTheParent", "NonControllingInterests",
+                                     "NonCurrentLiabilities",
+                                     "CurrentLiabilities",
+                                     "LiabilitiesRelatedToAssetsHeldForSaleAndDiscontinuedOperations"])
+
+df_temporary = df_temporary.drop(["CompanyID", "Period", "MarketValue"], axis=1)
+
+print(df_temporary)
+
+X_outliers_train, X_outliers_test = train_test_split(df_temporary, test_size=0.1)
+
+isolation_forest = IsolationForest()
+isolation_forest.fit(X_outliers_train)
+test_outliers = isolation_forest.predict(X_outliers_test)
+
+test_outliers = X_outliers_test[test_outliers == -1]
+
+print("Number of outliers in test data:", len(test_outliers), "out of:", len(X_outliers_test))
+
+# Processing data to predict market value change
 final_data = []
 
 for i in range(1, len(temporary_data)):
@@ -163,6 +179,13 @@ print("Test Loss:", loss)
 # print("Number of outliers in test data:", len(test_outliers), "out of:", len(X_test))
 
 
+# min_values = X.min()
+# max_values = X.max()
+#
+# print(min_values)
+# print(max_values)
+# print(X.shape[1])
+#
 # generated_companies = []
 # for i in range(100):
-#     generated_companies.append(Company([for i in range()]))
+#     generated_companies.append(Company())
