@@ -5,6 +5,9 @@ import pandas as pd
 from sklearn.cluster import DBSCAN
 from sklearn.ensemble import IsolationForest
 from sklearn.model_selection import train_test_split
+from Company import Company
+from generate_random_structure import generate_numbers_summing_to_100
+
 
 def percentage(a, b):
     return a / b * 100
@@ -157,6 +160,7 @@ for i in range(len(predictions)):
 loss = model.evaluate(X_test, y_test)
 print("Test Loss:", loss)
 
+
 # mape_loss = keras.metrics.mean_absolute_percentage_error(y_test, predictions)
 # mse_loss = keras.metrics.mean_squared_error(y_test, predictions)
 #
@@ -178,14 +182,11 @@ print("Test Loss:", loss)
 #
 # print("Number of outliers in test data:", len(test_outliers), "out of:", len(X_test))
 
+generated_companies = []
+while len(generated_companies) < 1:
+    company = Company(*generate_numbers_summing_to_100(5), *generate_numbers_summing_to_100(5))
+    if isolation_forest.predict(company.to_dataframe())[0] == -1:
+        continue
+    generated_companies.append(company)
 
-# min_values = X.min()
-# max_values = X.max()
-#
-# print(min_values)
-# print(max_values)
-# print(X.shape[1])
-#
-# generated_companies = []
-# for i in range(100):
-#     generated_companies.append(Company())
+print(generated_companies)
