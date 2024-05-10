@@ -158,18 +158,3 @@ model.compile(
 #
 # print("Number of outliers in test data:", len(test_outliers), "out of:", len(X_test))
 
-def generate_numbers_summing_to_100(n):
-    numbers = []
-    total = 0
-    for i in range(n - 1):
-        num = uniform(0, 100 - total - (n - i - 1))
-        numbers.append(num)
-        total += num
-    numbers.append(100 - total)
-    return numbers
-
-generated_companies = []
-while len(generated_companies) == 1000:
-    company = Company(*generate_numbers_summing_to_100(5), *generate_numbers_summing_to_100(5))
-
-    generated_companies.append(company)
