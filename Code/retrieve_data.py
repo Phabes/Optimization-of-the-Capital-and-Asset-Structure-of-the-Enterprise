@@ -2,14 +2,12 @@ import sqlite3
 
 from tensorflow import keras
 import pandas as pd
+import numpy as np
 from sklearn.cluster import DBSCAN
 from sklearn.ensemble import IsolationForest
 from sklearn.model_selection import train_test_split
-from scikeras.wrappers import KerasRegressor
 from random import uniform
-
 from Company import Company
-
 
 def percentage(a, b):
     return a / b * 100
@@ -22,8 +20,6 @@ cursor = conn.execute(
 )
 
 companies_with_needed_data = [row[0] for row in cursor]
-# print(companies_with_needed_data)
-# print(len(companies_with_needed_data))
 
 cursor = conn.execute(
     "SELECT C.ID, MV.[Period end], MV.[Market value], AC.[Non-current assets], AC.[Current assets], AC.[Assets held for sale and discontinuing operations], AC.[Called up capital], AC.[Own shares], ELC.[Equity shareholders of the parent], ELC.[Non-controlling interests], ELC.[Non-current liabilities], ELC.[Current liabilities], ELC.[Liabilities related to assets held for sale and discontinued operations] FROM Company AS C JOIN AssetsCategories AS AC ON AC.CompanyID = C.ID JOIN EquityLiabilitiesCategories AS ELC ON ELC.CompanyID = C.ID AND ELC.Date = AC.Date JOIN MarketValues MV ON MV.CompanyID = C.ID AND MV.[Period end] = ELC.Date WHERE C.ID IN ({seq}) ORDER BY C.ID, MV.[Period end]".format(
@@ -32,8 +28,6 @@ cursor = conn.execute(
 )
 
 data = [row for row in cursor]
-# print(data)
-# print(len(data))
 
 conn.close()
 
@@ -58,6 +52,32 @@ for i in range(len(data)):
 print(temporary_data)
 print(len(temporary_data))
 
+# Outlier structure detection
+df_temporary = pd.DataFrame(temporary_data,
+                            columns=["CompanyID", "Period", "MarketValue", "NonCurrentAssets", "CurrentAssets",
+                                     "AssetsHeldForSaleAndDiscountinuingOperations", "CalledUpCapital", "OwnShares",
+                                     "EquityShareholdersOfTheParent", "NonControllingInterests",
+                                     "NonCurrentLiabilities",
+                                     "CurrentLiabilities",
+                                     "LiabilitiesRelatedToAssetsHeldForSaleAndDiscontinuedOperations"])
+
+df_temporary = df_temporary.drop(["CompanyID", "Period", "MarketValue"], axis=1)
+
+print(df_temporary)
+print(df_temporary.min())
+print(df_temporary.max())
+
+X_outliers_train, X_outliers_test = train_test_split(df_temporary, test_size=0.1)
+
+isolation_forest = IsolationForest()
+isolation_forest.fit(X_outliers_train)
+test_outliers = isolation_forest.predict(X_outliers_test)
+
+test_outliers = X_outliers_test[test_outliers == -1]
+
+print("Number of outliers in test data:", len(test_outliers), "out of:", len(X_outliers_test))
+
+# Processing data to predict market value change
 final_data = []
 
 for i in range(1, len(temporary_data)):
@@ -122,39 +142,59 @@ model.compile(
     metrics=["mean_absolute_error"],
 )
 
-# model.fit(
-#     X_train,
-#     y_train,
-#     epochs=100,
-#     validation_data=(X_val, y_val),
-#     validation_freq=10,
-#     validation_split=0.2,
-#     # callbacks=[
-#     #     keras.callbacks.EarlyStopping(monitor="mean_absolute_error", patience=10),
-#     # ],
-#     verbose=True
-# )
+model.fit(
+    X_train,
+    y_train,
+    epochs=100,
+    validation_data=(X_val, y_val),
+    validation_freq=10,
+    validation_split=0.2,
+    # callbacks=[
+    #     keras.callbacks.EarlyStopping(monitor="mean_absolute_error", patience=10),
+    # ],
+    verbose=True
+)
 
-# predictions = model.predict(X_test)
-# for i in range(len(predictions)):
-#     print(predictions[i], y_test.iloc[i])
-#
-# loss = model.evaluate(X_test, y_test)
-# print("Test Loss:", loss)
+predictions = model.predict(X_test)
+for i in range(len(predictions)):
+    print(predictions[i], y_test.iloc[i])
 
-# dbscan = DBSCAN(eps=5, min_samples=2)
-# dbscan.fit(X_train)
-# test_labels = dbscan.fit_predict(X_test)
-#
-# test_outliers = X_test[test_labels == -1]
-#
-# print("Number of outliers in test data:", len(test_outliers))
+loss = model.evaluate(X_test, y_test)
+print("Test Loss:", loss)
 
-# isolation_forest = IsolationForest()
-# isolation_forest.fit(X_train)
-# test_outliers = isolation_forest.predict(X_test)
-#
-# test_outliers = X_test[test_outliers == -1]
-#
-# print("Number of outliers in test data:", len(test_outliers), "out of:", len(X_test))
+dbscan = DBSCAN(eps=5, min_samples=2)
+dbscan.fit(X_train)
+test_labels = dbscan.fit_predict(X_test)
 
+test_outliers = X_test[test_labels == -1]
+
+print("Number of outliers in test data:", len(test_outliers))
+
+isolation_forest = IsolationForest()
+isolation_forest.fit(X_train)
+test_outliers = isolation_forest.predict(X_test)
+
+test_outliers = X_test[test_outliers == -1]
+
+print("Number of outliers in test data:", len(test_outliers), "out of:", len(X_test))
+
+min_values = X.min()
+max_values = X.max()
+
+def generate_numbers_summing_to_100(n):
+    numbers = []
+    total = 0
+    for i in range(n - 1):
+        num = uniform(0, 100 - total - (n - i - 1))
+        numbers.append(num)
+        total += num
+    numbers.append(100 - total)
+    return numbers
+
+generated_companies = []
+while len(generated_companies) < 100:
+    company = Company(*generate_numbers_summing_to_100(5), *generate_numbers_summing_to_100(5))
+    if isolation_forest.predict(company.to_dataframe())[0] == -1: continue
+    generated_companies.append(company)
+
+print(generated_companies[0].to_dataframe(),generated_companies[1].to_dataframe(),generated_companies[2].to_dataframe())

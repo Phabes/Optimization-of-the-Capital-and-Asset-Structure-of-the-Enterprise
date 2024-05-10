@@ -1,3 +1,5 @@
+from random import uniform
+
 import pandas as pd
 
 
@@ -20,7 +22,7 @@ class Company:
         data = {
             "NonCurrentAssets": [self.non_current_assets],
             "CurrentAssets": [self.current_assets],
-            "AssetsHeldForSaleAndDiscontinuedOperations": [self.assets_held_for_sale_and_discontinued_operations],
+            "AssetsHeldForSaleAndDiscountinuingOperations": [self.assets_held_for_sale_and_discontinued_operations],
             "CalledUpCapital": [self.called_up_capital],
             "OwnShares": [self.own_shares],
             "EquityShareholdersOfTheParent": [self.equity_shareholders_of_the_parent],
