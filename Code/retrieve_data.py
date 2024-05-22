@@ -1,5 +1,6 @@
 import sqlite3
 
+from sklearn.cluster import DBSCAN
 from tensorflow import keras
 import pandas as pd
 from sklearn.ensemble import IsolationForest
@@ -160,13 +161,13 @@ print("Test Loss:", loss)
 #
 # print(mape_loss, mse_loss)
 
-# dbscan = DBSCAN(eps=5, min_samples=2)
-# dbscan.fit(X_train)
-# test_labels = dbscan.fit_predict(X_test)
-#
-# test_outliers = X_test[test_labels == -1]
-#
-# print("Number of outliers in test data:", len(test_outliers))
+dbscan = DBSCAN(eps=10, min_samples=2)
+dbscan.fit(X_train)
+test_labels = dbscan.fit_predict(X_test)
+
+test_outliers = X_test[test_labels == -1]
+
+print("Number of outliers in test data:", len(test_outliers))
 
 # isolation_forest = IsolationForest()
 # isolation_forest.fit(X_train)
@@ -180,6 +181,7 @@ print("Test Loss:", loss)
 # while len(generated_companies) < 1:
 #     company = Company(*generate_numbers_summing_to_100(5), *generate_numbers_summing_to_100(5))
 #     if isolation_forest.predict(company.to_dataframe())[0] == -1:
+#     # if dbscan.fit_predict(company.to_dataframe())[0] == -1:
 #         continue
 #     generated_companies.append(company)
 #
@@ -204,3 +206,4 @@ for epoch in range(epochs):
 
     predictions = model.predict(data)
     print(predictions)
+    # here modify structure of companies with good changes
