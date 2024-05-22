@@ -9,4 +9,8 @@ def generate_numbers_summing_to_100(n):
         numbers.append(num)
         total += num
     numbers.append(100 - total)
+
+    if sum(numbers) != 100:
+        return generate_numbers_summing_to_100(n)
+
     return numbers

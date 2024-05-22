@@ -2,16 +2,11 @@ import sqlite3
 
 from tensorflow import keras
 import pandas as pd
-from sklearn.cluster import DBSCAN
 from sklearn.ensemble import IsolationForest
 from sklearn.model_selection import train_test_split
 from Company import Company
 from generate_random_structure import generate_numbers_summing_to_100
-
-
-def percentage(a, b):
-    return a / b * 100
-
+from calculations import percentage
 
 conn = sqlite3.connect("original_quarter.db")
 
@@ -130,7 +125,7 @@ outputs = keras.layers.Dense(1)(x)
 
 model = keras.Model(inputs=inputs, outputs=outputs)
 
-learning_rate = 0.000001  # You can adjust this value as needed
+learning_rate = 0.000001
 
 optimizer = keras.optimizers.Adam(learning_rate=learning_rate)
 
@@ -160,7 +155,6 @@ for i in range(len(predictions)):
 loss = model.evaluate(X_test, y_test)
 print("Test Loss:", loss)
 
-
 # mape_loss = keras.metrics.mean_absolute_percentage_error(y_test, predictions)
 # mse_loss = keras.metrics.mean_squared_error(y_test, predictions)
 #
@@ -182,11 +176,31 @@ print("Test Loss:", loss)
 #
 # print("Number of outliers in test data:", len(test_outliers), "out of:", len(X_test))
 
+# generated_companies = []
+# while len(generated_companies) < 1:
+#     company = Company(*generate_numbers_summing_to_100(5), *generate_numbers_summing_to_100(5))
+#     if isolation_forest.predict(company.to_dataframe())[0] == -1:
+#         continue
+#     generated_companies.append(company)
+#
+# print(generated_companies)
+
+n = 100
 generated_companies = []
-while len(generated_companies) < 1:
-    company = Company(*generate_numbers_summing_to_100(5), *generate_numbers_summing_to_100(5))
-    if isolation_forest.predict(company.to_dataframe())[0] == -1:
-        continue
+
+for i in range(n):
+    assets = generate_numbers_summing_to_100(5)
+    liabilities = generate_numbers_summing_to_100(5)
+    company = Company(*assets, *liabilities)
     generated_companies.append(company)
 
-print(generated_companies)
+epochs = 100
+
+for epoch in range(epochs):
+    data = pd.DataFrame()
+
+    for company in generated_companies:
+        data = pd.concat([data, company.generate_random_modification()], axis=0)
+
+    predictions = model.predict(data)
+    print(predictions)
