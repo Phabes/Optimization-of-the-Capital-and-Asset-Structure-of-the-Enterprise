@@ -20,8 +20,8 @@ def get_percentage_structure(data):
         for liability in liabilities:
             row.append(percentage(liability, total_liabilities))
 
-        if only_positive_values(assets) and only_positive_values(liabilities):
-            percentage_structure_data.append(row)
+        # if only_positive_values(assets) and only_positive_values(liabilities): // if we accept only positive values
+        percentage_structure_data.append(row)
 
     return percentage_structure_data
 
@@ -37,6 +37,5 @@ def get_structure_changes(data):
         for j in range(3, len(data[i])):
             x.append(data[i][j] - data[i - 1][j])
         final_data.append(x)
-    for i in final_data:
-        print(i)
+
     return final_data

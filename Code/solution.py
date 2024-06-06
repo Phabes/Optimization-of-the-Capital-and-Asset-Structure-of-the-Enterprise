@@ -18,10 +18,12 @@ final_data = get_structure_changes(percentage_structure_data)
 structure_change = StructureChange(final_data)
 structure_change_model = structure_change.train_model()
 
-number_of_companies = 100
+number_of_companies = 10
 evolutionary_algorithm = EvolutionaryAlgorithm(number_of_companies, means, isolation_forest, structure_change_model)
 
-epochs = 100
+evolutionary_algorithm.check_generated_structures()
+
+epochs = 10
 for i in range(epochs):
     evolutionary_algorithm.generate_offspring()
 
