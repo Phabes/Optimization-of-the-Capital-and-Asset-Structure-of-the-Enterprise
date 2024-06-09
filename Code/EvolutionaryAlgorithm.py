@@ -25,7 +25,7 @@ class EvolutionaryAlgorithm:
     def check_generated_structures(self):
         for company in self.generated_companies:
             values = company.to_dataframe().values[0]
-            print(values, sum(values[:5]), sum(values[5:]))
+            print(["{:.2f}".format(num) for num in values])
 
     def generate_gradient(self):
         values = []

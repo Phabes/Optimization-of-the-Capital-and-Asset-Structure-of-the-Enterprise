@@ -23,7 +23,7 @@ evolutionary_algorithm = EvolutionaryAlgorithm(number_of_companies, means, isola
 
 evolutionary_algorithm.check_generated_structures()
 
-epochs = 10
+epochs = 100
 for i in range(epochs):
     evolutionary_algorithm.generate_offspring()
 
